@@ -6,6 +6,7 @@
 * sailee
 * Anirudh D. Kavediya
 * Misbah
+* Miti
 * Vaishnavi
 * Ronit Morbekar
 * Diyaaa
