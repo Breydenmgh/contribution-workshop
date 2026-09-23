@@ -1,0 +1,82 @@
+name: Merge All Contributor PRs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+
+          gh pr list \
+            --state open \
+            --base main \
+            --limit 100 \
+            --json number \
+            --jq '.[].number' |
+          sort -n |
+          while read -r PR; do
+
+            echo "=================================="
+            echo "PR #$PR"
+            echo "=================================="
+
+            # Always use the PR's actual head.
+            git fetch origin "refs/pull/$PR/head:pr-$PR"
+
+            # Try normal merge first.
+            if git merge --no-ff --no-edit "pr-$PR"; then
+              echo "Clean merge."
+
+            else
+              echo "Conflict detected."
+
+              conflicts=$(git diff --name-only --diff-filter=U)
+
+              # We only know how to automatically resolve Contributors.md.
+              if [ "$conflicts" != "Contributors.md" ]; then
+                echo "Unexpected conflict:"
+                echo "$conflicts"
+                git merge --abort
+                exit 1
+              fi
+
+              echo "Combining Contributors.md from both sides..."
+
+              git show HEAD:Contributors.md > /tmp/main.md
+              git show "pr-$PR":Contributors.md > /tmp/pr.md
+
+              {
+                cat /tmp/main.md
+                cat /tmp/pr.md
+              } | awk '!seen[$0]++' > Contributors.md
+
+              git add Contributors.md
+              git commit -m "Merge PR #$PR"
+            fi
+
+            git push origin main
+
+            echo "✓ PR #$PR merged into main"
+          done
