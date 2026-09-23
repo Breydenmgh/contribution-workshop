@@ -4,6 +4,7 @@
 * Misbah 
 * Anirudh D. Kavediya
 * Misbah
+* Tanu
 * Lizaa
 * Jayvardhan Mokashi
 * Piyush
