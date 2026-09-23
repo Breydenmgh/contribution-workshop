@@ -4,6 +4,7 @@
 * Misbah 
 * Anirudh D. Kavediya
 * Misbah
+* Palak
 * yash
 * Ayaan
 * vedant
